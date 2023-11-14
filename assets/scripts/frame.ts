@@ -48,7 +48,6 @@ export class FrameComponent extends Component {
 
         this.perTime = Number(game.frameRate) / this.frame;
 
-        console.log("perTime->", this.perTime)
         this.sprite = this.node.getComponent(Sprite);
         if (!this.sprite) {
             this.sprite = this.node.addComponent(Sprite)
@@ -73,11 +72,8 @@ export class FrameComponent extends Component {
         this.frameIndex %= this.frameCount;
         let x = this.frameIndex * this.onceWidth
         // console.log(this.frameIndex)
-        //切换图片
-        let spriteFrame = this.sprite.spriteFrame;
-        this.sprite.spriteFrame = null;
-        spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
-        this.sprite.spriteFrame = spriteFrame;
+        this.sprite.spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
+        this.sprite.markForUpdateRenderData(true)
         //丑陋, 后续优化
     }
 }
