@@ -1,4 +1,5 @@
-import { _decorator, Camera, CCInteger, Component, Director, director, EventKeyboard, find, game, gfx, input, Input, KeyCode, Node, RenderTexture, Sprite, SpriteFrame, UITransform, v2, v3, Vec2, Vec3, view } from 'cc';
+import { _decorator, Camera, CCInteger, Component, Director, director, EventKeyboard, EventMouse, find, game, gfx, input, Input, KeyCode, Node, RenderTexture, Sprite, SpriteFrame, UITransform, v2, v3, Vec2, Vec3, view } from 'cc';
+import { FrameComponent } from '../component/FrameComponent';
 const { ccclass, property } = _decorator;
 
 @ccclass('HeroCtrl')
@@ -14,6 +15,11 @@ export class HeroCtrl extends Component {
     })
     heroSprite: Sprite = null;
 
+    @property({
+        type: FrameComponent
+    })
+    frameCtrl: FrameComponent = null;
+
     //移动方向
     private moveDirection: Vec2 = v2(0, 0)
     private clickFlag: boolean = true;
@@ -26,6 +32,9 @@ export class HeroCtrl extends Component {
         //监听键盘事件
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this)
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this)
+        input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
+
+        // this.frameCtrl.
     }
 
     update(deltaTime: number) {
@@ -72,6 +81,11 @@ export class HeroCtrl extends Component {
 
     private onKeyUp(e: EventKeyboard) {
         this.clickFlag = false;
+    }
+
+    private onMouseDown(e: EventMouse) {
+        // 释放技能
+        this.frameCtrl
     }
 
 }

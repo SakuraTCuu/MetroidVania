@@ -4,7 +4,7 @@ const { ccclass, property } = _decorator;
 /**
  * 帧动画控件
  */
-@ccclass('Frame')
+@ccclass('FrameComponent')
 export class FrameComponent extends Component {
 
     @property({
@@ -22,7 +22,7 @@ export class FrameComponent extends Component {
         type: Size,
         displayName: "单图尺寸"
     })
-    perFrameSize: Size = size();
+    perFrameSize: Size = size(120, 80);
 
     @property({
         type: CCBoolean
@@ -36,11 +36,15 @@ export class FrameComponent extends Component {
     private frameIndex: number = 0;
     private frameCount = 0;
 
+    private defaultFrame: number = 24;
+
     private sprite: Sprite = null;
 
     start() {
         let height = this.frameSprite.height
         let width = this.frameSprite.width
+
+        this.defaultFrame = this.frame;
 
         this.frameCount = width / this.perFrameSize.width;
         this.onceWidth = this.perFrameSize.width;
@@ -70,11 +74,39 @@ export class FrameComponent extends Component {
         this.startTime = 0;
         this.frameIndex++;
         this.frameIndex %= this.frameCount;
+
         let x = this.frameIndex * this.onceWidth
-        // console.log(this.frameIndex)
         this.sprite.spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
         this.sprite.markForUpdateRenderData(true)
-        //丑陋, 后续优化
+    }
+
+    //记录第几帧, 向外发送事件, 外部关心当前动画到第几帧了
+    public getFrameIndex() {
+        return this.frameIndex
+    }
+
+    /**
+     * 减缓播放帧率 被减速了? 减缓动画速度
+     * @param slowRate 减速比例百分数: 例如: 50%, 30%
+     */
+    public setSlowState(slowRate) {
+        if (slowRate > 1 || slowRate < 0) {
+            console.log(`非法的减速:${slowRate}`)
+            return
+        }
+        if (slowRate === 0) {
+            this.frame = this.defaultFrame;
+        } else {
+            this.frame = this.frame * (1 - slowRate)
+        }
+        this.perTime = Number(game.frameRate) / this.frame;
+    }
+
+    /**
+     * 播放一个动作
+     */
+    public playOnceAction() {
+        //加载一个
     }
 }
 
