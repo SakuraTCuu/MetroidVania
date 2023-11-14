@@ -1,4 +1,5 @@
-import { _decorator, CCBoolean, CCInteger, Component, game, Node, rect, size, Size, Sprite, SpriteFrame, v2 } from 'cc';
+import { _decorator, CCBoolean, CCInteger, Component, game, Node, rect, resources, size, Size, Sprite, SpriteFrame, v2 } from 'cc';
+import { FrameInfo } from '../common/ConfigMgr';
 const { ccclass, property } = _decorator;
 
 /**
@@ -52,12 +53,26 @@ export class FrameComponent extends Component {
 
         this.perTime = Number(game.frameRate) / this.frame;
 
+        this.initSpriteFrame(this.frameSprite);
+    }
+
+    initSpriteFrame(spf: SpriteFrame) {
         this.sprite = this.node.getComponent(Sprite);
         if (!this.sprite) {
             this.sprite = this.node.addComponent(Sprite)
         }
-        this.sprite.spriteFrame = this.frameSprite
+        this.sprite.spriteFrame = spf
         this.sprite.spriteFrame.rect = rect(0, 0, this.onceWidth, this.onceHeight)
+    }
+
+    private reset(info: FrameInfo) {
+        this.defaultFrame = this.frame;
+        this.frameCount = info.width / info.once_width;
+        this.onceWidth = info.once_width;
+        this.onceHeight = info.once_height;
+        this.perTime = Number(game.frameRate) / this.frame;
+
+        this.startTime = 0;
     }
 
     update(dt: number) {
@@ -105,8 +120,22 @@ export class FrameComponent extends Component {
     /**
      * 播放一个动作
      */
-    public playOnceAction() {
+    public playOnceAction(info: FrameInfo) {
         //加载一个
+        if (!info) {
+            console.log("无效的info", info)
+            return;
+        }
+        let res_path = info.res_path;
+
+        this.reset(info);
+        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
+            if (err) {
+                console.log(err)
+                return;
+            }
+            this.initSpriteFrame(spriteFrame);
+        });
     }
 }
 
