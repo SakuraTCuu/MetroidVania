@@ -1,0 +1,179 @@
+import { input, KeyCode, EventKeyboard, Input, sys } from "cc";
+
+export type KeyCombo = KeyCode[];
+export type KeyEvent = {
+    down?: Function
+    press?: Function
+    up?: Function
+}
+export type KeyBinding = {
+    combo: KeyCombo,
+    event: KeyEvent,
+}
+
+/**
+ * 输入控制器
+ */
+export default class InputCtrl {
+
+    private timer = null;
+    public h = 0
+    public v = 0
+    public mag = 1;
+    private keyState = new Map<KeyCode, boolean>;
+    private keyEventMap = new Map<KeyCombo, KeyEvent>;
+    private keyBindingMap = new Map<string, KeyBinding>;
+
+    constructor() {
+        if (!sys.isMobile) {
+            input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+            input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+            let self = this;
+            document.addEventListener('visibilitychange', function () {
+                let isHidden = document.hidden;
+                if (isHidden) {
+                    if (self.timer) {
+                        clearTimeout(self.timer);
+                    }
+                    self.h = self.v = 0;
+                    self.mag = 1;
+                }
+            });
+        }
+    }
+
+    private onKeyUp(event: EventKeyboard) {
+        const keyCode = event.keyCode;
+        this.keyState.set(keyCode, false);
+        for (let keys of this.keyEventMap.keys()) {
+            let keystate = false
+            let length = keys.length;
+            for (var i = 0; i < length; i++) {
+                const key = keys[i];
+                if (keyCode == key) {
+                    keystate = true;
+                    break;
+                }
+            }
+            if (keystate) {
+                const cb = this.keyEventMap.get(keys);
+                if (cb.up) cb.up();
+                break;
+            }
+        }
+    }
+
+    private onKeyDown(event: EventKeyboard) {
+        const keyCode = event.keyCode;
+
+        this.keyState.set(keyCode, true);
+        for (let keys of this.keyEventMap.keys()) {
+            let keystate = false;
+            let length = keys.length;
+            for (let i = 0; i < length; i++) {
+                const key = keys[i]
+                keystate = this.keyState.get(key);
+                if (!keystate) {
+                    break;
+                }
+            }
+
+            if (keystate) {
+                this.keyState.set(keyCode, false);
+                const cb = this.keyEventMap.get(keys);
+                if (cb.down) cb.down();
+                break;
+            }
+        }
+    }
+
+
+    /**
+    * @en : add new key binding 
+    * @cn : 添加新的按键注册
+    * @param {string} eventName  event Name
+    * @param {KeyCombo} combo  keys, could be combos
+    * @param {KeyEvents} keyEvent key events
+    * @param {Label} label label
+    */
+    add(eventName: string, combo: KeyCombo, keyEvent: KeyEvent) {
+        const config = this.keyBindingMap.get(eventName);
+        if (config) {
+            this.removeKey(config.combo);
+        }
+        const keyConfig: KeyBinding = { combo: combo, event: keyEvent };
+        this.keyBindingMap.set(eventName, keyConfig);
+        this.addKey(combo, keyEvent);
+        return this;
+    }
+
+    /**
+     * @en : clear a binding event
+     * @cn : 清除绑定的事件
+     * @param {string} eventName
+     */
+    clear(eventName: string) {
+        const config = this.keyBindingMap.get(eventName);
+        if (config) {
+            config.combo.length = 0;
+        }
+        return this;
+    }
+
+    /**
+    * @en : remove key binding
+    * @cn : 移除按键注册
+    * @param {string} eventName
+    */
+    remove(eventName: string) {
+        const config = this.keyBindingMap.get(eventName);
+        if (config) {
+            this.removeKey(config.combo);
+            this.keyBindingMap.delete(eventName);
+        }
+        return this;
+    }
+
+    /**
+     * @en : get config map
+     * @cn : 获取按键事件
+     * @param {string} eventName
+     */
+    get(eventName: string) {
+        return this.keyBindingMap.get(eventName) || null;
+    }
+
+    /**
+     * @Description: add new combo with event
+     * @param {KeyCode} keys use array for combination keys use single Keycode for single Key
+     * @param {KeyEvents} event
+     * @return {*}
+     */
+    private addKey(combo: KeyCombo, event: KeyEvent) {
+        combo.sort();
+        this.keyEventMap.set(combo, event);
+        return this;
+    }
+
+    /**
+     * @en : remove combo
+     * @cn : 删除按键组合
+     * @param {KeyCombo} combo
+     */
+    private removeKey(combo: KeyCombo) {
+        this.keyEventMap.delete(combo);
+        return this;
+    }
+
+    /**
+    * @en : get all binding keys in array
+    * @cn : 获取所有的绑定键数组
+    */
+    getKeys() {
+        let actions = []
+        for (let key of this.keyBindingMap.keys()) {
+            actions.push(key);
+        }
+        return actions;
+    }
+}
