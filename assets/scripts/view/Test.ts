@@ -1,8 +1,9 @@
 import { _decorator, Component, Label, Node, UITransform } from 'cc';
-import { ConfigMgr, FrameInfo } from '../common/ConfigMgr';
+import { ConfigMgr } from '../common/ConfigMgr';
 import { FrameComponent } from '../component/FrameComponent';
 import InputCtrl, { KeyEvent } from '../controller/InputCtrl';
 import { KeyCode } from 'cc';
+import { FrameInfo } from '../common/Constant';
 const { ccclass, property } = _decorator;
 
 @ccclass('Test')

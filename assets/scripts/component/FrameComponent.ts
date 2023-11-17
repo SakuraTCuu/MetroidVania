@@ -1,5 +1,5 @@
 import { _decorator, CCBoolean, CCInteger, Component, game, Node, rect, resources, size, Size, Sprite, SpriteFrame, v2 } from 'cc';
-import { FrameInfo } from '../common/ConfigMgr';
+import { FrameInfo } from '../common/Constant';
 const { ccclass, property } = _decorator;
 
 /**

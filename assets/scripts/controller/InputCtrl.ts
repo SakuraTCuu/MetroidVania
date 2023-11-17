@@ -1,3 +1,4 @@
+import { EventMouse } from "cc";
 import { input, KeyCode, EventKeyboard, Input, sys } from "cc";
 
 export type KeyCombo = KeyCode[];
@@ -5,9 +6,16 @@ export type KeyEvent = {
     down?: Function
     press?: Function
     up?: Function
+    move?: Function
 }
+
 export type KeyBinding = {
     combo: KeyCombo,
+    event: KeyEvent,
+}
+
+export type KeyMouseBinding = {
+    combo: number,
     event: KeyEvent,
 }
 
@@ -21,13 +29,20 @@ export default class InputCtrl {
     public v = 0
     public mag = 1;
     private keyState = new Map<KeyCode, boolean>;
+    private keyMouseState = new Map<number, boolean>;
     private keyEventMap = new Map<KeyCombo, KeyEvent>;
     private keyBindingMap = new Map<string, KeyBinding>;
+
+    private keyMouseEventMap = new Map<number, KeyEvent>;
+    private keyMouseBindingMap = new Map<string, KeyMouseBinding>;
 
     constructor() {
         if (!sys.isMobile) {
             input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
             input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+            input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
+            input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
+            input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
             let self = this;
             document.addEventListener('visibilitychange', function () {
                 let isHidden = document.hidden;
@@ -39,6 +54,48 @@ export default class InputCtrl {
                     self.mag = 1;
                 }
             });
+        }
+    }
+
+    private onMouseDown(event: EventMouse) {
+        const clickBtn = event.getButton();
+        this.keyMouseState.set(clickBtn, true);
+        for (let key of this.keyMouseEventMap.keys()) {
+            let keystate = this.keyMouseState.get(key);
+            if (keystate) {
+                this.keyMouseState.set(clickBtn, false);
+                const cb = this.keyMouseEventMap.get(key);
+                if (cb.down) cb.down(event);
+                break;
+            }
+        }
+    }
+
+    private onMouseUp(event: EventMouse) {
+        const clickBtn = event.getButton();
+        this.keyMouseState.set(clickBtn, true);
+        for (let key of this.keyMouseEventMap.keys()) {
+            let keystate = this.keyMouseState.get(key);
+            if (keystate) {
+                this.keyMouseState.set(clickBtn, false);
+                const cb = this.keyMouseEventMap.get(key);
+                if (cb.up) cb.up(event);
+                break;
+            }
+        }
+    }
+
+    private onMouseMove(event: EventMouse) {
+        const clickBtn = event.getButton();
+        this.keyMouseState.set(clickBtn, true);
+        for (let key of this.keyMouseEventMap.keys()) {
+            let keystate = this.keyMouseState.get(key);
+            if (keystate) {
+                this.keyMouseState.set(clickBtn, false);
+                const cb = this.keyMouseEventMap.get(key);
+                if (cb.move) cb.move(event);
+                break;
+            }
         }
     }
 
@@ -57,7 +114,7 @@ export default class InputCtrl {
             }
             if (keystate) {
                 const cb = this.keyEventMap.get(keys);
-                if (cb.up) cb.up();
+                if (cb.up) cb.up(event);
                 break;
             }
         }
@@ -81,12 +138,49 @@ export default class InputCtrl {
             if (keystate) {
                 this.keyState.set(keyCode, false);
                 const cb = this.keyEventMap.get(keys);
-                if (cb.down) cb.down();
+                if (cb.down) cb.down(event);
                 break;
             }
         }
     }
 
+    addMouse(eventName: string, combo: number, keyEvent: KeyEvent) { //注册鼠标事件
+        const config = this.keyMouseBindingMap.get(eventName);
+        if (config) {
+            this.removeMouseKey(config.combo);
+        }
+        const keyConfig: KeyMouseBinding = { combo: combo, event: keyEvent };
+        this.keyMouseBindingMap.set(eventName, keyConfig);
+        this.addMouseKey(combo, keyEvent);
+
+        this.keyMouseEventMap.set(combo, keyEvent)
+        return this;
+    }
+
+    /**
+     * @Description: add new combo with event
+     * @param {KeyCode} keys use array for combination keys use single Keycode for single Key
+     * @param {KeyEvents} event
+     * @return {*}
+     */
+    private addMouseKey(combo: number, event: KeyEvent) {
+        this.keyMouseEventMap.set(combo, event);
+        return this;
+    }
+
+    /**
+     * @en : remove combo
+     * @cn : 删除按键组合
+     * @param {number} combo
+     */
+    private removeMouseKey(combo: number) {
+        this.keyMouseEventMap.delete(combo);
+        return this;
+    }
+
+    removeMouse(combo: number) {
+        this.keyMouseEventMap.delete(combo);
+    }
 
     /**
     * @en : add new key binding 

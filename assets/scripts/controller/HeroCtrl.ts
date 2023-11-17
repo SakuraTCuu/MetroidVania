@@ -1,5 +1,7 @@
 import { _decorator, Camera, CCInteger, Component, Director, director, EventKeyboard, EventMouse, find, game, gfx, input, Input, KeyCode, Node, RenderTexture, Sprite, SpriteFrame, UITransform, v2, v3, Vec2, Vec3, view } from 'cc';
 import { FrameComponent } from '../component/FrameComponent';
+import InputCtrl, { KeyEvent } from './InputCtrl';
+import app from '../App';
 const { ccclass, property } = _decorator;
 
 @ccclass('HeroCtrl')
@@ -28,13 +30,74 @@ export class HeroCtrl extends Component {
     private flipBody: boolean = false;
     private preDirection: number = null;
 
+    onPressKeyW: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(0, 1)
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    };
+    onPressKeyS: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(0, -1)
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    };
+    onPressKeyA: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(-1, 0)
+            if (this.preDirection === null || this.preDirection === KeyCode.KEY_D) {
+                this.flipBody = true;
+            }
+            this.preDirection = KeyCode.KEY_A
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    };
+    onPressKeyD: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(1, 0)
+            if (this.preDirection === KeyCode.KEY_A) {
+                this.flipBody = true;
+            }
+            this.preDirection = KeyCode.KEY_D
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    };
+
+    onPressKeyCX: KeyEvent = {
+        down: (event) => {
+            console.log("onPressKeyCX")
+        }
+    };
+
+    onMouseLeft: KeyEvent = {
+        down: () => {
+            console.log("onMouseDown")
+        },
+        up: () => {
+
+        }
+    }
+
     start() {
         //监听键盘事件
-        input.on(Input.EventType.KEY_UP, this.onKeyUp, this)
-        input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this)
-        input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
-
-        // this.frameCtrl.
+        app.inputCtrl
+            .add("right", [KeyCode.KEY_D], this.onPressKeyD)
+            .add("left", [KeyCode.KEY_A], this.onPressKeyA)
+            .add("up", [KeyCode.KEY_W], this.onPressKeyW)
+            .add("down", [KeyCode.KEY_S], this.onPressKeyS)
+            .addMouse("attack", EventMouse.BUTTON_LEFT, this.onMouseLeft)
     }
 
     update(deltaTime: number) {
@@ -48,44 +111,6 @@ export class HeroCtrl extends Component {
             this.node.scale = v3(-scale.x, scale.y, scale.z)
             this.flipBody = false;
         }
-    }
-
-    private onKeyDown(e: EventKeyboard) {
-        this.clickFlag = true;
-        switch (e.keyCode) {
-            case KeyCode.KEY_A:
-                this.moveDirection = v2(-1, 0)
-                if (this.preDirection === null || this.preDirection === KeyCode.KEY_D) {
-                    this.flipBody = true;
-                }
-                this.preDirection = KeyCode.KEY_A
-                break;
-            case KeyCode.KEY_D:
-                this.moveDirection = v2(1, 0)
-                if (this.preDirection === KeyCode.KEY_A) {
-                    this.flipBody = true;
-                }
-                this.preDirection = KeyCode.KEY_D
-                break;
-            case KeyCode.KEY_S:
-                this.moveDirection = v2(0, -1)
-                break;
-            case KeyCode.KEY_W:
-                this.moveDirection = v2(0, 1)
-                break;
-            default:
-                this.clickFlag = false;
-                break;
-        }
-    }
-
-    private onKeyUp(e: EventKeyboard) {
-        this.clickFlag = false;
-    }
-
-    private onMouseDown(e: EventMouse) {
-        // 释放技能
-        this.frameCtrl
     }
 
 }

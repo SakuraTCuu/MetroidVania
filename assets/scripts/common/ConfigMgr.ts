@@ -1,16 +1,19 @@
-export interface FrameInfo {
-    id: number,
-    res_path: string, //资源路径
-    width: number,
-    height: number,
-    once_width: number, //单图宽度
-    once_height: number, //单图高度
-    actionName: string, //动作名
-    total_frame: number, // 共几帧图片
-    damage_frame: Array<number>, //伤害帧
-}
+import { FrameInfo, HeroAttr } from "./Constant"
 
 export class ConfigMgr {
+
+    public static heroAttr: HeroAttr = {
+        hp_max: 1000, //最大血量
+        attack_p: 30, //攻击力
+        spell_s: 0, //法强
+        def_p: 30,  // 护甲
+        def_s: 30, // 魔法抗性
+        move_speed: 10, // 移动速度
+        crit_rate: 0, // 暴击率
+        crit_ratio: 100, //爆伤
+        vampire: 0, //吸血
+    }
+
     public static heroAction: Record<string, FrameInfo> = {
         "attack": {
             id: 0,
@@ -276,6 +279,10 @@ export class ConfigMgr {
             actionName: "wallHang", //动作名
             damage_frame: [], //伤害帧
         },
+
+    }
+
+    public static enemyAction: Record<string, FrameInfo> = {
 
     }
 }
