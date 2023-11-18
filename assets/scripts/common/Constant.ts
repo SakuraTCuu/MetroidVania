@@ -27,6 +27,18 @@ export interface NormalEnemyAttr extends BaseAttr {
     visitor_time: number; //多久检测一下领地是否有敌人
 }
 
+export interface MonsterAttr {
+    id: number;
+    name: string;
+    hpMax: number;
+    attackPower: number;
+    spellStrength: number;
+    physicalDefense: number;
+    magicResistance: number;
+    moveSpeed: number;
+    // 添加其他属性...
+}
+
 export interface HeroAttr extends BaseAttr {
     // hp: number; //血量
     crit_rate: number; // 暴击率

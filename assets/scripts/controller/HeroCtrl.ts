@@ -1,6 +1,6 @@
-import { _decorator, Camera, CCInteger, Component, Director, director, EventKeyboard, EventMouse, find, game, gfx, input, Input, KeyCode, Node, RenderTexture, Sprite, SpriteFrame, UITransform, v2, v3, Vec2, Vec3, view } from 'cc';
+import { _decorator, CCInteger, Component, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
 import { FrameComponent } from '../component/FrameComponent';
-import InputCtrl, { KeyEvent } from './InputCtrl';
+import { KeyEvent } from './InputCtrl';
 import app from '../App';
 const { ccclass, property } = _decorator;
 
