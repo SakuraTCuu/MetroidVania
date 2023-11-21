@@ -1,7 +1,8 @@
 import { Monster } from "../Role/monster/Monster";
+import { MonsterAttr } from "./Constant";
 
 export class MonsterConfig {
-    private static readonly monsterData: { [key: number]: MonsterData } = {
+    private static readonly monsterData: { [key: number]: MonsterAttr } = {
         1: {
             id: 1,
             name: "Goblin",
