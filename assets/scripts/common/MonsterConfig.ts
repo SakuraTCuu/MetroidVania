@@ -1,4 +1,5 @@
-import { Monster } from "../Role/monster/Monster";
+import { MonsterModal } from "../Role/model/MonsterModal";
+import { MonsterCtrl } from "../controller/MonsterCtrl";
 import { MonsterAttr } from "./Constant";
 
 export class MonsterConfig {
@@ -28,23 +29,14 @@ export class MonsterConfig {
         // 添加更多怪物类型...
     };
 
-    public static createMonster(monsterId: number): Monster {
+    public static getMonsterConfig(monsterId: number): MonsterAttr {
         const monsterData = this.monsterData[monsterId];
         if (!monsterData) {
             console.error(`Monster with ID ${monsterId} does not exist in the configuration.`);
             return null;
         }
 
-        return new Monster(
-            monsterData.id,
-            monsterData.hpMax,
-            monsterData.attackPower,
-            monsterData.spellStrength,
-            monsterData.physicalDefense,
-            monsterData.magicResistance,
-            monsterData.moveSpeed
-            // 添加其他属性...
-        );
+        return monsterData 
     }
 }
 
