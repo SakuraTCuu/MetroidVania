@@ -1,31 +1,25 @@
-import { _decorator, CCInteger, Component, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
-import { FrameComponent } from '../component/FrameComponent';
+import { Node, _decorator, CCInteger, Component, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
 import { KeyEvent } from './InputCtrl';
-import app from '../App';
 import { find } from 'cc';
-import { BoxCollider } from 'cc';
-import { geometry } from 'cc';
 import { BoxCollider2D } from 'cc';
-const { ccclass, property } = _decorator;
+import { director, Director } from 'cc';
+import BaseCtrl from '../base/BaseCtrl';
+import { FrameComponent } from '../component/FrameComponent';
 
-@ccclass('HeroCtrl')
-export class HeroCtrl extends Component {
+export default class HeroCtrl extends BaseCtrl {
 
-    @property({
-        type: CCInteger
-    })
-    MoveSpeed: number = 1;
+    private static instance: HeroCtrl;
 
-    @property({
-        type: Sprite
-    })
-    heroSprite: Sprite = null;
+    public static getInstance(): HeroCtrl {
+        if (!this.instance) {
+            this.instance = new HeroCtrl()
+        }
+        return this.instance;
+    }
 
-    @property({
-        type: FrameComponent
-    })
-    frameCtrl: FrameComponent = null;
-
+    private heroNode: Node;
+    private HeroFrameCtrl: FrameComponent;
+    private moveSpeed: number = 5;
     //移动方向
     private moveDirection: Vec2 = v2(0, 0)
     private clickFlag: boolean = true;
@@ -36,6 +30,17 @@ export class HeroCtrl extends Component {
 
     private isShiftPressed: boolean = false;
 
+    onPressKeySpace: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            // 跳
+            this.jump();
+        },
+        up: () => {
+            this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
+        }
+    };
     onPressKeyW: KeyEvent = {
         down: () => {
             this.clickFlag = true;
@@ -43,6 +48,7 @@ export class HeroCtrl extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
         }
     };
     onPressKeyS: KeyEvent = {
@@ -52,6 +58,7 @@ export class HeroCtrl extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
         }
     };
     onPressKeyA: KeyEvent = {
@@ -65,6 +72,7 @@ export class HeroCtrl extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
         }
     };
     onPressKeyD: KeyEvent = {
@@ -78,6 +86,7 @@ export class HeroCtrl extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
         }
     };
 
@@ -90,6 +99,7 @@ export class HeroCtrl extends Component {
     onMouseLeft: KeyEvent = {
         down: () => {
             console.log("onMouseDown")
+            this.attack()
         },
         up: () => {
 
@@ -105,27 +115,51 @@ export class HeroCtrl extends Component {
         }
     }
 
+    constructor() {
+        super()
 
-    start() {
-        //监听键盘事件
         app.inputCtrl
             .add("right", [KeyCode.KEY_D], this.onPressKeyD)
             .add("left", [KeyCode.KEY_A], this.onPressKeyA)
             .add("up", [KeyCode.KEY_W], this.onPressKeyW)
             .add("down", [KeyCode.KEY_S], this.onPressKeyS)
+            .add("jump", [KeyCode.SPACE], this.onPressKeySpace)
             .add("down_platform", [KeyCode.KEY_S, KeyCode.SHIFT_LEFT], this.onMouseDownPlatform)
             .addMouse("attack", EventMouse.BUTTON_LEFT, this.onMouseLeft)
+
+        director.on(Director.EVENT_BEFORE_UPDATE, (dt) => {
+            this.onTick(dt)
+        });
     }
 
-    update(deltaTime: number) {
+    public setHeroNode(node: Node) {
+        this.heroNode = node;
+
+        this.HeroFrameCtrl = this.heroNode.getChildByName("Frame").getComponent(FrameComponent)
+    }
+
+    /**
+     * 按下空格, 跳
+     */
+    private jump() {
+        this.HeroFrameCtrl.playOnceAction("jump")
+    }
+
+    private attack(){
+        this.HeroFrameCtrl.playOnceAction("attack")
+    }
+
+    onTick(dt: number) {
+        if (!this.heroNode) { return }
         if (this.clickFlag) {
-            let vDist = this.moveDirection.clone().multiplyScalar(this.MoveSpeed)
-            let pos = this.node.getPosition();
-            this.node.setPosition(pos.add(v3(vDist.x, vDist.y, 0)))
+            let vDist = this.moveDirection.clone().multiplyScalar(this.moveSpeed)
+            let pos = this.heroNode.getPosition();
+            this.heroNode.setPosition(pos.add(v3(vDist.x, vDist.y, 0)))
         }
+
         if (this.flipBody) {
-            let scale = this.node.scale
-            this.node.scale = v3(-scale.x, scale.y, scale.z)
+            let scale = this.heroNode.scale
+            this.heroNode.scale = v3(-scale.x, scale.y, scale.z)
             this.flipBody = false;
         }
     }
@@ -151,7 +185,7 @@ export class HeroCtrl extends Component {
         const platforms = find("Canvas/Platforms").children;
 
         // let pfmBox = new geometry.AABB
-        const heroBoundingBox = this.node.getComponent(BoxCollider2D).worldAABB;
+        const heroBoundingBox = this.heroNode.getComponent(BoxCollider2D).worldAABB;
 
         for (const platform of platforms) {
             const platformBoundingBox = platform.getComponent(BoxCollider2D).worldAABB;
@@ -177,5 +211,9 @@ export class HeroCtrl extends Component {
         return null;
     }
 
+    public getHeroPos() {
+        if (!this.heroNode) { return }
+        return this.heroNode.getPosition()
+    }
 
 }

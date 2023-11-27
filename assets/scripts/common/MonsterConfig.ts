@@ -1,5 +1,3 @@
-import { MonsterModal } from "../Role/model/MonsterModal";
-import { MonsterCtrl } from "../controller/MonsterCtrl";
 import { MonsterAttr } from "./Constant";
 
 export class MonsterConfig {

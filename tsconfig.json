@@ -4,6 +4,9 @@
   /* Add your custom configuration here. */
   "compilerOptions": {
     "strict": false,
-    "target": "ES2016"
+    "types": [
+      "minigame-api-typings"
+    ]
+    // "target": "ES2016"
   }
 }

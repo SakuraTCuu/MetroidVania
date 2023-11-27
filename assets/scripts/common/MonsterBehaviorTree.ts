@@ -1,16 +1,13 @@
 import { Vec3, v3 } from "cc";
+import HeroCtrl from "../controller/HeroCtrl";
+import { Node } from "cc";
+import { Monster } from "../Role/monster/Monster";
 
 export enum MonsterState {
   Patrol,
   Chase,
   Dead,
 }
-
-// const monsterBehaviorTree = new MonsterBehaviorTree();
-// 在每一帧更新怪物行为树，传入玩家位置信息
-// game.on(game.EVENT_TICK, (dt) => {
-//   monsterBehaviorTree.update(dt, player.getPosition());
-// });
 
 export default class MonsterBehaviorTree {
   private state: MonsterState = MonsterState.Patrol;
@@ -24,13 +21,21 @@ export default class MonsterBehaviorTree {
   private readonly PATROL_RADIUS: number = 300; // 巡逻领地半径
   private readonly CHASE_RADIUS: number = 200; // 追击领地半径
 
-  public update(dt: number, playerPosition: Vec3 | null): void {
+  private monsterNode: Node;
+  private monster: Monster;
+
+  public init(node: Node, monster: Monster) {
+    this.monsterNode = node;
+    this.monster = monster;
+  }
+
+  public update(dt: number): void {
     switch (this.state) {
       case MonsterState.Patrol:
-        this.updatePatrol(dt, playerPosition);
+        this.updatePatrol(dt);
         break;
       case MonsterState.Chase:
-        this.updateChase(dt, playerPosition);
+        this.updateChase(dt);
         break;
       case MonsterState.Dead:
         this.updateDead(dt);
@@ -38,24 +43,26 @@ export default class MonsterBehaviorTree {
     }
   }
 
-  private updatePatrol(dt: number, playerPosition: Vec3 | null): void {
+  private updatePatrol(dt: number): void {
+    // console.log("巡逻")
     // 实现巡逻逻辑
     this.patrolTimer += dt;
 
     // 如果检测到玩家进入领地，切换到追击状态
-    if (playerPosition && this.distanceToPlayer(playerPosition) < this.CHASE_RADIUS) {
+    if (this.distanceToPlayer() < this.CHASE_RADIUS) {
       this.state = MonsterState.Chase;
       this.chaseTimer = 0;
       // 进入追击状态时的其他逻辑，比如播放追击动画
     }
   }
 
-  private updateChase(dt: number, playerPosition: Vec3 | null): void {
+  private updateChase(dt: number): void {
+    // console.log("追击")
     // 实现追击逻辑
     this.chaseTimer += dt;
 
     // 如果玩家逃离领地范围或者怪物无法追击，切换回巡逻状态
-    if (!playerPosition || this.distanceToPlayer(playerPosition) > this.CHASE_RADIUS || this.chaseTimer > this.MAX_CHASE_TIME) {
+    if (this.distanceToPlayer() > this.CHASE_RADIUS || this.chaseTimer > this.MAX_CHASE_TIME) {
       this.state = MonsterState.Patrol;
       this.patrolTimer = 0;
       // 切换回巡逻状态时的其他逻辑，比如播放巡逻动画
@@ -63,6 +70,7 @@ export default class MonsterBehaviorTree {
   }
 
   private updateDead(dt: number): void {
+    console.log("死亡")
     // 实现死亡逻辑
     this.deadTimer += dt;
 
@@ -75,14 +83,16 @@ export default class MonsterBehaviorTree {
     }
   }
 
-  private distanceToPlayer(playerPosition: Vec3): number {
+  private distanceToPlayer(): number {
+    let heroPos = HeroCtrl.getInstance().getHeroPos()
+    if (!heroPos) { return Number.MAX_VALUE }
     // 计算怪物到玩家的距离
-    return playerPosition.subtract(this.monsterPosition).length();
+    return heroPos.subtract(this.monsterPosition).length();
   }
 
   private get monsterPosition(): Vec3 {
     // 获取怪物当前位置的逻辑，比如根据怪物的节点获取位置
-    return v3(0, 0, 0); // 替换成你的实际逻辑
+    return this.monsterNode.getPosition()
   }
 }
 

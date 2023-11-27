@@ -1,5 +1,7 @@
 import { _decorator, CCBoolean, CCInteger, Component, game, Node, rect, resources, size, Size, Sprite, SpriteFrame, v2 } from 'cc';
 import { FrameInfo } from '../common/Constant';
+import { CCString } from 'cc';
+import { ConfigMgr } from '../common/ConfigMgr';
 const { ccclass, property } = _decorator;
 
 /**
@@ -30,6 +32,11 @@ export class FrameComponent extends Component {
     })
     autoPlay: boolean = false;
 
+    @property({
+        type: CCString
+    })
+    defaultAct: string = "idle";
+
     private onceWidth: number = 0;
     private onceHeight: number = 0;
     private perTime: number = 2;
@@ -40,6 +47,9 @@ export class FrameComponent extends Component {
     private defaultFrame: number = 24;
 
     private sprite: Sprite = null;
+
+    //单次动作标志
+    private onceAct: boolean = false;
 
     start() {
         let height = this.frameSprite.height
@@ -54,6 +64,8 @@ export class FrameComponent extends Component {
         this.perTime = Number(game.frameRate) / this.frame;
 
         this.initSpriteFrame(this.frameSprite);
+
+        this.playDefaultAction()
     }
 
     initSpriteFrame(spf: SpriteFrame) {
@@ -66,13 +78,16 @@ export class FrameComponent extends Component {
     }
 
     private reset(info: FrameInfo) {
-        this.defaultFrame = this.frame;
+        // this.frame = info.total_frame;
         this.frameCount = info.width / info.once_width;
         this.onceWidth = info.once_width;
         this.onceHeight = info.once_height;
-        this.perTime = Number(game.frameRate) / this.frame;
+        this.perTime = Number(game.frameRate) / this.frame * (1 / Number(game.frameRate));
 
         this.startTime = 0;
+        this.frameIndex = 0;
+        console.log("perTime->", this.perTime)
+        console.log("frameCount->", this.frameCount)
     }
 
     update(dt: number) {
@@ -83,14 +98,21 @@ export class FrameComponent extends Component {
             return
         }
         if (this.startTime < this.perTime) {
-            this.startTime++;
+            this.startTime += dt;
             return
         }
         this.startTime = 0;
         this.frameIndex++;
-        this.frameIndex %= this.frameCount;
+        if (this.frameIndex > this.frameCount && this.onceAct) {
+            //执行一个动作完成, 判断是否由一次动作事件
+            this.onceAct = false;
+            this.playDefaultAction()
+            this.autoPlay = false
+            return;
+        }
+        let index = this.frameIndex % this.frameCount;
 
-        let x = this.frameIndex * this.onceWidth
+        let x = index * this.onceWidth
         this.sprite.spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
         this.sprite.markForUpdateRenderData(true)
     }
@@ -120,7 +142,34 @@ export class FrameComponent extends Component {
     /**
      * 播放一个动作
      */
-    public playOnceAction(info: FrameInfo) {
+    public playOnceAction(actName: string, once: boolean = true) {
+        console.log("playAct=>", actName)
+        this.autoPlay = true;
+        let info = ConfigMgr.heroAction[actName]
+        //加载一个
+        if (!info) {
+            console.log("无效的info", info)
+            return;
+        }
+        let res_path = info.res_path;
+
+        this.reset(info);
+        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
+            if (err) {
+                console.log(err)
+                return;
+            }
+            this.onceAct = once;
+            this.initSpriteFrame(spriteFrame);
+        });
+    }
+
+    /**
+     * 播放默认动作
+     */
+    public playDefaultAction() {
+        console.log("playDefaultAction=>")
+        let info = ConfigMgr.heroAction[this.defaultAct]
         //加载一个
         if (!info) {
             console.log("无效的info", info)

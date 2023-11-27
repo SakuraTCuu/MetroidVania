@@ -1,9 +1,20 @@
 import SkillEffect from "../Role/skill/SkillEffect";
 
-export default class SkillController {
+export default class SkillCtrl {
+
+    private static instance: SkillCtrl;
+
+    public static getInstance(): SkillCtrl {
+        if (!this.instance) {
+            this.instance = new SkillCtrl()
+        }
+        return this.instance;
+    }
+
     private skillData: SkillData;
 
-    constructor(skillData: SkillData) {
+    //TODO:  应该有一个具体的Skill类
+    constructor(skillData?: SkillData) {
         this.skillData = skillData;
     }
 

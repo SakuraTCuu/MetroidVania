@@ -1,5 +1,15 @@
 import { Size } from "cc";
 
+export enum Layer {
+    SCENE = 0, //场景层
+    ROLE = 10, //角色层
+    EFFECT = 11, //特效层
+    UI = 20, //UI层
+    VIEW = 30, //View层
+    MASK = 40, //遮罩层
+    GUIDE = 50,// 引导层
+    TOP = 60, //最顶层
+}
 export interface FrameInfo {
     id: number,
     res_path: string, //资源路径
