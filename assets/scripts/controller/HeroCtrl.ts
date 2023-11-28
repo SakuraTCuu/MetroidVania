@@ -19,7 +19,7 @@ export default class HeroCtrl extends BaseCtrl {
 
     private heroNode: Node;
     private HeroFrameCtrl: FrameComponent;
-    private moveSpeed: number = 5;
+    private moveSpeed: number = 2;
     //移动方向
     private moveDirection: Vec2 = v2(0, 0)
     private clickFlag: boolean = true;
@@ -45,6 +45,7 @@ export default class HeroCtrl extends BaseCtrl {
         down: () => {
             this.clickFlag = true;
             this.moveDirection = v2(0, 1)
+            this.run()
         },
         up: () => {
             this.clickFlag = false;
@@ -55,6 +56,7 @@ export default class HeroCtrl extends BaseCtrl {
         down: () => {
             this.clickFlag = true;
             this.moveDirection = v2(0, -1)
+            this.run()
         },
         up: () => {
             this.clickFlag = false;
@@ -69,6 +71,7 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_A
+            this.run()
         },
         up: () => {
             this.clickFlag = false;
@@ -83,6 +86,7 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_D
+            this.run()
         },
         up: () => {
             this.clickFlag = false;
@@ -115,17 +119,72 @@ export default class HeroCtrl extends BaseCtrl {
         }
     }
 
+    onPress_Shift_S: KeyEvent = {
+        down: () => {
+            console.log("onPress_Shift_S")
+            this.clickFlag = true;
+            this.crouch()
+        },
+        up: () => {
+            this.clickFlag = false;
+            this.isShiftPressed = false;
+        }
+    }
+
+    onPress_Shift_A: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(-1, 0)
+            if (this.preDirection === KeyCode.KEY_D) {
+                this.flipBody = true;
+            }
+            this.preDirection = KeyCode.KEY_A
+            this.crouchWalk()
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    }
+
+    onPress_Shift_D: KeyEvent = {
+        down: () => {
+            this.clickFlag = true;
+            this.moveDirection = v2(1, 0)
+            if (this.preDirection === KeyCode.KEY_A) {
+                this.flipBody = true;
+            }
+            this.preDirection = KeyCode.KEY_D
+            this.crouchWalk()
+        },
+        up: () => {
+            this.clickFlag = false;
+        }
+    }
+
+    onPress_Shift: KeyEvent = {
+        down: () => {
+            console.log("onPress_Shift")
+        },
+        up: () => {
+           
+        }
+    }
+
     constructor() {
         super()
 
         app.inputCtrl
+            .add("crouch", [KeyCode.SHIFT_LEFT, KeyCode.KEY_S], this.onPress_Shift_S)
+            .add("crouch_left", [KeyCode.SHIFT_LEFT, KeyCode.KEY_A], this.onPress_Shift_A)
+            .add("crouch_right", [KeyCode.SHIFT_LEFT, KeyCode.KEY_D], this.onPress_Shift_D)
+            .add("down_platform", [KeyCode.SHIFT_LEFT, KeyCode.SPACE], this.onMouseDownPlatform)
+            .addMouse("attack", EventMouse.BUTTON_LEFT, this.onMouseLeft)
             .add("right", [KeyCode.KEY_D], this.onPressKeyD)
             .add("left", [KeyCode.KEY_A], this.onPressKeyA)
-            .add("up", [KeyCode.KEY_W], this.onPressKeyW)
-            .add("down", [KeyCode.KEY_S], this.onPressKeyS)
+            // .add("up", [KeyCode.KEY_W], this.onPressKeyW)
+            // .add("down", [KeyCode.KEY_S], this.onPressKeyS)
             .add("jump", [KeyCode.SPACE], this.onPressKeySpace)
-            .add("down_platform", [KeyCode.KEY_S, KeyCode.SHIFT_LEFT], this.onMouseDownPlatform)
-            .addMouse("attack", EventMouse.BUTTON_LEFT, this.onMouseLeft)
+        // .add("shift", [KeyCode.SHIFT_LEFT], this.onPress_Shift)
 
         director.on(Director.EVENT_BEFORE_UPDATE, (dt) => {
             this.onTick(dt)
@@ -142,11 +201,23 @@ export default class HeroCtrl extends BaseCtrl {
      * 按下空格, 跳
      */
     private jump() {
-        this.HeroFrameCtrl.playOnceAction("jump")
+        this.HeroFrameCtrl.playOnceAction("jump", true)
     }
 
-    private attack(){
-        this.HeroFrameCtrl.playOnceAction("attack")
+    private attack() {
+        this.HeroFrameCtrl.playOnceAction("attack", true)
+    }
+
+    private run() {
+        this.HeroFrameCtrl.playOnceAction("run")
+    }
+
+    private crouch() {
+        this.HeroFrameCtrl.playOnceAction("crouch")
+    }
+
+    private crouchWalk() {
+        this.HeroFrameCtrl.playOnceAction("crouchWalk")
     }
 
     onTick(dt: number) {

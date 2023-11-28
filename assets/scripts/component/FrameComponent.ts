@@ -86,8 +86,6 @@ export class FrameComponent extends Component {
 
         this.startTime = 0;
         this.frameIndex = 0;
-        console.log("perTime->", this.perTime)
-        console.log("frameCount->", this.frameCount)
     }
 
     update(dt: number) {
@@ -142,7 +140,7 @@ export class FrameComponent extends Component {
     /**
      * 播放一个动作
      */
-    public playOnceAction(actName: string, once: boolean = true) {
+    public playOnceAction(actName: string, once: boolean = false) {
         console.log("playAct=>", actName)
         this.autoPlay = true;
         let info = ConfigMgr.heroAction[actName]
@@ -168,7 +166,6 @@ export class FrameComponent extends Component {
      * 播放默认动作
      */
     public playDefaultAction() {
-        console.log("playDefaultAction=>")
         let info = ConfigMgr.heroAction[this.defaultAct]
         //加载一个
         if (!info) {
@@ -176,7 +173,6 @@ export class FrameComponent extends Component {
             return;
         }
         let res_path = info.res_path;
-
         this.reset(info);
         resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
             if (err) {

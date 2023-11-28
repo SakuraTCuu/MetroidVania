@@ -122,7 +122,8 @@ export default class InputCtrl {
 
     private onKeyDown(event: EventKeyboard) {
         const keyCode = event.keyCode;
-
+ 
+        console.log("keyCode->", keyCode)
         this.keyState.set(keyCode, true);
         for (let keys of this.keyEventMap.keys()) {
             let keystate = false;
