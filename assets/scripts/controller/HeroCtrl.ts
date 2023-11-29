@@ -34,7 +34,7 @@ export default class HeroCtrl extends BaseCtrl {
         down: () => {
             this.clickFlag = true;
             // 跳
-            this.jump();
+            this.playHeroAction("jump")
         },
         up: () => {
             this.clickFlag = false;
@@ -45,24 +45,15 @@ export default class HeroCtrl extends BaseCtrl {
         down: () => {
             this.clickFlag = true;
             this.moveDirection = v2(0, 1)
-            this.run()
+            this.playHeroAction("run", false)
         },
         up: () => {
             this.clickFlag = false;
             this.moveDirection = v2(0, 0)
+            this.playHeroAction("idle", false)
         }
     };
-    onPressKeyS: KeyEvent = {
-        down: () => {
-            this.clickFlag = true;
-            this.moveDirection = v2(0, -1)
-            this.run()
-        },
-        up: () => {
-            this.clickFlag = false;
-            this.moveDirection = v2(0, 0)
-        }
-    };
+
     onPressKeyA: KeyEvent = {
         down: () => {
             this.clickFlag = true;
@@ -71,11 +62,13 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_A
-            this.run()
+            this.playHeroAction("run", false)
         },
         up: () => {
+            console.log("onPressKeyA up")
             this.clickFlag = false;
             this.moveDirection = v2(0, 0)
+            this.playHeroAction("idle", false)
         }
     };
     onPressKeyD: KeyEvent = {
@@ -86,11 +79,13 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_D
-            this.run()
+            this.playHeroAction("run", false)
         },
         up: () => {
+            console.log("onPressKeyD up")
             this.clickFlag = false;
             this.moveDirection = v2(0, 0)
+            this.playHeroAction("idle", false)
         }
     };
 
@@ -102,8 +97,16 @@ export default class HeroCtrl extends BaseCtrl {
 
     onMouseLeft: KeyEvent = {
         down: () => {
-            console.log("onMouseDown")
-            this.attack()
+            this.playHeroAction("attack")
+        },
+        up: () => {
+
+        }
+    }
+
+    onMouseRight: KeyEvent = {
+        down: () => {
+            this.playHeroAction("attackCombo")
         },
         up: () => {
 
@@ -123,7 +126,7 @@ export default class HeroCtrl extends BaseCtrl {
         down: () => {
             console.log("onPress_Shift_S")
             this.clickFlag = true;
-            this.crouch()
+            this.playHeroAction("crouch")
         },
         up: () => {
             this.clickFlag = false;
@@ -139,10 +142,12 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_A
-            this.crouchWalk()
+            this.playHeroAction("crouchWalk", false)
         },
         up: () => {
             this.clickFlag = false;
+            this.moveDirection = v2(0, 0)
+            this.playHeroAction("idle", false)
         }
     }
 
@@ -154,19 +159,12 @@ export default class HeroCtrl extends BaseCtrl {
                 this.flipBody = true;
             }
             this.preDirection = KeyCode.KEY_D
-            this.crouchWalk()
+            this.playHeroAction("crouchWalk", false)
         },
         up: () => {
             this.clickFlag = false;
-        }
-    }
-
-    onPress_Shift: KeyEvent = {
-        down: () => {
-            console.log("onPress_Shift")
-        },
-        up: () => {
-           
+            this.moveDirection = v2(0, 0)
+            this.playHeroAction("idle", false)
         }
     }
 
@@ -179,12 +177,12 @@ export default class HeroCtrl extends BaseCtrl {
             .add("crouch_right", [KeyCode.SHIFT_LEFT, KeyCode.KEY_D], this.onPress_Shift_D)
             .add("down_platform", [KeyCode.SHIFT_LEFT, KeyCode.SPACE], this.onMouseDownPlatform)
             .addMouse("attack", EventMouse.BUTTON_LEFT, this.onMouseLeft)
+            .addMouse("attack_heavy", EventMouse.BUTTON_RIGHT, this.onMouseRight)
             .add("right", [KeyCode.KEY_D], this.onPressKeyD)
             .add("left", [KeyCode.KEY_A], this.onPressKeyA)
             // .add("up", [KeyCode.KEY_W], this.onPressKeyW)
             // .add("down", [KeyCode.KEY_S], this.onPressKeyS)
             .add("jump", [KeyCode.SPACE], this.onPressKeySpace)
-        // .add("shift", [KeyCode.SHIFT_LEFT], this.onPress_Shift)
 
         director.on(Director.EVENT_BEFORE_UPDATE, (dt) => {
             this.onTick(dt)
@@ -195,29 +193,6 @@ export default class HeroCtrl extends BaseCtrl {
         this.heroNode = node;
 
         this.HeroFrameCtrl = this.heroNode.getChildByName("Frame").getComponent(FrameComponent)
-    }
-
-    /**
-     * 按下空格, 跳
-     */
-    private jump() {
-        this.HeroFrameCtrl.playOnceAction("jump", true)
-    }
-
-    private attack() {
-        this.HeroFrameCtrl.playOnceAction("attack", true)
-    }
-
-    private run() {
-        this.HeroFrameCtrl.playOnceAction("run")
-    }
-
-    private crouch() {
-        this.HeroFrameCtrl.playOnceAction("crouch")
-    }
-
-    private crouchWalk() {
-        this.HeroFrameCtrl.playOnceAction("crouchWalk")
     }
 
     onTick(dt: number) {
@@ -287,4 +262,13 @@ export default class HeroCtrl extends BaseCtrl {
         return this.heroNode.getPosition()
     }
 
+    /**
+     * 播放动作
+     * @param actName 动作名
+     * @param once 是否只播放一次
+     * @param pre 动作播放完成,是否恢复上一个动作
+     */
+    private playHeroAction(actName: string, once: boolean = true, pre: boolean = true) {
+        this.HeroFrameCtrl.playOnceAction(actName, once, pre)
+    }
 }

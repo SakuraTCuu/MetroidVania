@@ -101,28 +101,30 @@ export default class InputCtrl {
 
     private onKeyUp(event: EventKeyboard) {
         const keyCode = event.keyCode;
-        this.keyState.set(keyCode, false);
+        this.keyState.set(keyCode, true);
         for (let keys of this.keyEventMap.keys()) {
             let keystate = false
             let length = keys.length;
             for (var i = 0; i < length; i++) {
                 const key = keys[i];
-                if (keyCode == key) {
-                    keystate = true;
+                keystate = this.keyState.get(key);
+                if (!keystate) {
                     break;
                 }
             }
             if (keystate) {
+                console.log("up->", keyCode)
                 const cb = this.keyEventMap.get(keys);
                 if (cb.up) cb.up(event);
                 break;
             }
         }
+        this.keyState.set(keyCode, false);
     }
 
     private onKeyDown(event: EventKeyboard) {
         const keyCode = event.keyCode;
- 
+
         console.log("keyCode->", keyCode)
         this.keyState.set(keyCode, true);
         for (let keys of this.keyEventMap.keys()) {

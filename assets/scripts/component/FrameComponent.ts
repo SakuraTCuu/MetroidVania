@@ -50,6 +50,10 @@ export class FrameComponent extends Component {
 
     //单次动作标志
     private onceAct: boolean = false;
+    //是否播放上一个动作
+    private preFlag: boolean = false;
+    private oldAct: string = "";
+    private newAct: string = "";
 
     start() {
         let height = this.frameSprite.height
@@ -102,6 +106,12 @@ export class FrameComponent extends Component {
         this.startTime = 0;
         this.frameIndex++;
         if (this.frameIndex > this.frameCount && this.onceAct) {
+            if (this.preFlag) {  //TODO: 上一个事件,多次播放还是单独播放? 需要定义一个结构来保存
+                this.onceAct = false;
+                this.playPreAction()
+                return;
+            }
+
             //执行一个动作完成, 判断是否由一次动作事件
             this.onceAct = false;
             this.playDefaultAction()
@@ -140,9 +150,10 @@ export class FrameComponent extends Component {
     /**
      * 播放一个动作
      */
-    public playOnceAction(actName: string, once: boolean = false) {
+    public playOnceAction(actName: string, once: boolean = false, pre: boolean = false) {
         console.log("playAct=>", actName)
         this.autoPlay = true;
+        this.preFlag = pre;
         let info = ConfigMgr.heroAction[actName]
         //加载一个
         if (!info) {
@@ -158,6 +169,35 @@ export class FrameComponent extends Component {
                 return;
             }
             this.onceAct = once;
+            this.oldAct = this.newAct;
+            this.newAct = actName;
+            this.initSpriteFrame(spriteFrame);
+        });
+    }
+
+    /**
+   * 播放一个动作
+   */
+    public playPreAction() {
+        console.log("playPreAction=>", this.oldAct)
+        this.autoPlay = true;
+        let info = ConfigMgr.heroAction[this.oldAct]
+        //加载一个
+        if (!info) {
+            console.log("无效的info", info)
+            return;
+        }
+        let res_path = info.res_path;
+
+        this.reset(info);
+        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
+            if (err) {
+                console.log(err)
+                return;
+            }
+            let temp = this.oldAct;
+            this.oldAct = this.newAct;
+            this.newAct = temp;
             this.initSpriteFrame(spriteFrame);
         });
     }
