@@ -3,6 +3,7 @@ import { input, KeyCode, EventKeyboard, Input, sys } from "cc";
 
 export type KeyCombo = KeyCode[];
 export type KeyEvent = {
+    state?: boolean  //状态
     down?: Function
     press?: Function
     up?: Function
@@ -99,33 +100,53 @@ export default class InputCtrl {
         }
     }
 
+    // private onKeyUp(event: EventKeyboard) {
+    //     const keyCode = event.keyCode;
+    //     this.keyState.set(keyCode, false);
+    //     for (let keys of this.keyEventMap.keys()) {
+
+    //         if (keys.indexOf(keyCode) == -1) {
+    //             continue;
+    //         }
+
+    //         let keystate = false
+    //         let length = keys.length;
+    //         for (var i = 0; i < length; i++) {
+    //             const key = keys[i];
+    //             keystate = this.keyState.get(key);
+    //             if (!keystate) {
+    //                 break;
+    //             }
+    //         }
+    //         if (keystate) {
+    //             const cb = this.keyEventMap.get(keys);
+    //             if (cb.up) cb.up(event);
+    //             break;
+    //         }
+    //     }
+    //     this.keyState.set(keyCode, false);
+    // }
+
     private onKeyUp(event: EventKeyboard) {
         const keyCode = event.keyCode;
-        this.keyState.set(keyCode, true);
+        this.keyState.set(keyCode, false);
         for (let keys of this.keyEventMap.keys()) {
-            let keystate = false
-            let length = keys.length;
-            for (var i = 0; i < length; i++) {
-                const key = keys[i];
-                keystate = this.keyState.get(key);
-                if (!keystate) {
-                    break;
-                }
+
+            if (keys.indexOf(keyCode) == -1) {
+                continue;
             }
-            if (keystate) {
-                console.log("up->", keyCode)
-                const cb = this.keyEventMap.get(keys);
-                if (cb.up) cb.up(event);
-                break;
+
+            const cb = this.keyEventMap.get(keys);
+            if (cb.state && cb.up) { //触发过down, 则触发up
+                cb.state = false
+                cb.up(event);
             }
         }
-        this.keyState.set(keyCode, false);
     }
 
     private onKeyDown(event: EventKeyboard) {
         const keyCode = event.keyCode;
 
-        console.log("keyCode->", keyCode)
         this.keyState.set(keyCode, true);
         for (let keys of this.keyEventMap.keys()) {
             let keystate = false;
@@ -139,8 +160,8 @@ export default class InputCtrl {
             }
 
             if (keystate) {
-                this.keyState.set(keyCode, false);
                 const cb = this.keyEventMap.get(keys);
+                cb.state = true;
                 if (cb.down) cb.down(event);
                 break;
             }

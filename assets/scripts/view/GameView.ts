@@ -17,7 +17,7 @@ export class GameView extends Component {
     monsterNode: Node = null
 
     protected onLoad(): void {
-        app.heroCtrl.setHeroNode(this.heroNode)
+
     }
 
     protected start(): void {
