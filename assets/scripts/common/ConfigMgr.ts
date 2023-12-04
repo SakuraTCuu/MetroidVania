@@ -14,7 +14,11 @@ export class ConfigMgr {
         vampire: 0, //吸血
     }
 
-    public static heroAction: Record<string, FrameInfo> = {
+    public static getHeroAction(actName: string): FrameInfo {
+        return this.heroAction[actName]
+    }
+
+    private static heroAction: Record<string, FrameInfo> = {
         "attack": {
             id: 0,
             res_path: "hero/frame/attack/spriteFrame", //资源路径

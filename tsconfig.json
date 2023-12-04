@@ -6,7 +6,7 @@
     "strict": false,
     "types": [
       "minigame-api-typings"
-    ]
-    // "target": "ES2016"
+    ],
+    "target": "ES2016"
   }
 }

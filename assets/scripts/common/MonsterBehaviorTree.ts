@@ -1,5 +1,5 @@
 import { Vec3, v3 } from "cc";
-import HeroCtrl from "../controller/HeroCtrl";
+import HeroCtrl from "../Role/hero/HeroCtrl";
 import { Node } from "cc";
 import { Monster } from "../Role/monster/Monster";
 

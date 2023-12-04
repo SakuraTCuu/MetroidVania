@@ -1,7 +1,10 @@
-import { _decorator, CCInteger, Component, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
+import { _decorator, CCInteger, Component, Node, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
 import { FrameComponent } from '../../component/FrameComponent';
 import { director, Director, find, BoxCollider2D } from 'cc';
 import { KeyEvent } from '../../controller/InputCtrl';
+import HeroModel from './HeroModel';
+import { ConfigMgr } from '../../common/ConfigMgr';
+import { UITransform } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('HeroView')
@@ -13,15 +16,11 @@ export class HeroView extends Component {
     MoveSpeed: number = 1;
 
     @property({
-        type: Sprite
+        type: Node
     })
-    heroSprite: Sprite = null;
+    heroNode: Node = null;
 
-    @property({
-        type: FrameComponent
-    })
-    HeroFrameCtrl: FrameComponent = null;
-
+    private frameComp: FrameComponent = null;
     private moveSpeed: number = 2;
     //移动方向
     private moveDirection: Vec2 = v2(0, 0)
@@ -32,6 +31,8 @@ export class HeroView extends Component {
     private preDirection: number = null;
 
     private isShiftPressed: boolean = false;
+
+    private model: HeroModel = null;
 
     onPressKeySpace: KeyEvent = {
         down: () => {
@@ -172,9 +173,9 @@ export class HeroView extends Component {
         }
     }
 
-    constructor() {
-        super()
 
+    start() {
+        this.model = new HeroModel()
         app.inputCtrl
             .add("crouch", [KeyCode.SHIFT_LEFT, KeyCode.KEY_S], this.onPress_Shift_S)
             .add("crouch_left", [KeyCode.SHIFT_LEFT, KeyCode.KEY_A], this.onPress_Shift_A)
@@ -186,12 +187,11 @@ export class HeroView extends Component {
             .add("left", [KeyCode.KEY_A], this.onPressKeyA)
             .add("jump", [KeyCode.SPACE], this.onPressKeySpace)
 
-        director.on(Director.EVENT_BEFORE_UPDATE, (dt) => {
-            this.onTick(dt)
-        });
+        this.frameComp = this.heroNode.addComponent(FrameComponent);
+        this.frameComp.init()
     }
 
-    onTick(dt: number) {
+    update(dt: number) {
         if (!this.node) { return }
         if (this.clickFlag) {
             let vDist = this.moveDirection.clone().multiplyScalar(this.moveSpeed)
@@ -264,6 +264,10 @@ export class HeroView extends Component {
      * @param pre 动作播放完成,是否恢复上一个动作
      */
     private playHeroAction(actName: string, once: boolean = true, pre: boolean = true) {
-        this.HeroFrameCtrl.playOnceAction(actName, once, pre)
+        this.frameComp.playOnceAction({
+            actName,
+            flag_onceAct: once,
+            flag_preAct: pre
+        })
     }
 }

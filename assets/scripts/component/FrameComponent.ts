@@ -1,99 +1,98 @@
-import { _decorator, CCBoolean, CCInteger, Component, game, Node, rect, resources, size, Size, Sprite, SpriteFrame, v2 } from 'cc';
 import { FrameInfo } from '../common/Constant';
-import { CCString } from 'cc';
 import { ConfigMgr } from '../common/ConfigMgr';
+import { SpriteFrame, Sprite, game, rect, resources, Component, _decorator } from 'cc';
+import { UITransform } from 'cc';
+import { v2 } from 'cc';
 const { ccclass, property } = _decorator;
+
+export interface FrameActExt {
+    actName?: string;
+    flag_onceAct?: boolean; //播放一次 or 循环
+    flag_preAct?: boolean; //播放一次完是播放上一个或者播放默认动作
+    onEndFrameFunc?: (baseInfo?: FrameInfo) => void; //结束回调
+    onKeyFrameFunc?: (baseInfo?: FrameInfo) => void; //关键帧回调
+}
 
 /**
  * 帧动画控件
  */
+
 @ccclass('FrameComponent')
-export class FrameComponent extends Component {
+export class FrameComponent extends Sprite {
+    /**默认动作 */
+    private defaultAct: string = "idle";
+    /**自动播放 */
+    private autoPlay: boolean = true;
+    /**24张图为1s */
+    private frame: number = 24;
+    private defaultFrame: number = 24;
 
-    @property({
-        type: SpriteFrame
-    })
-    frameSprite: SpriteFrame = null;
-
-    @property({
-        type: CCInteger,
-        displayName: "帧率"
-    })
-    frame: number = 24;
-
-    @property({
-        type: Size,
-        displayName: "单图尺寸"
-    })
-    perFrameSize: Size = size(120, 80);
-
-    @property({
-        type: CCBoolean
-    })
-    autoPlay: boolean = false;
-
-    @property({
-        type: CCString
-    })
-    defaultAct: string = "idle";
-
+    /**单图宽高 */
     private onceWidth: number = 0;
     private onceHeight: number = 0;
+
+    /**每一张图显示的时长, 帧为单位 */
     private perTime: number = 2;
     private startTime: number = 0;
+    /**当前帧的index */
     private frameIndex: number = 0;
     private frameCount = 0;
 
-    private defaultFrame: number = 24;
+    //上一个的动作的信息
+    private preFrameActExt: FrameActExt = null
+    //当前动作的信息
+    private curFrameActExt: FrameActExt = {
+        actName: "idle"
+    };;
 
-    private sprite: Sprite = null;
+    /**
+     * 播放历史
+     */
+    private historyArr: Array<FrameActExt> = [];
 
-    //单次动作标志
-    private onceAct: boolean = false;
-    //是否播放上一个动作
-    private preFlag: boolean = false;
-    private oldAct: string = "";
-    private newAct: string = "";
+    /**
+     * 当前播放动画的基础数据
+     */
+    private baseInfo: FrameInfo = null;
 
-    start() {
-        let height = this.frameSprite.height
-        let width = this.frameSprite.width
-
-        this.defaultFrame = this.frame;
-
-        this.frameCount = width / this.perFrameSize.width;
-        this.onceWidth = this.perFrameSize.width;
-        this.onceHeight = this.perFrameSize.height;
-
-        this.perTime = Number(game.frameRate) / this.frame;
-
-        this.initSpriteFrame(this.frameSprite);
-
+    init() {
+        this.trim = false;
         this.playDefaultAction()
     }
 
-    initSpriteFrame(spf: SpriteFrame) {
-        this.sprite = this.node.getComponent(Sprite);
-        if (!this.sprite) {
-            this.sprite = this.node.addComponent(Sprite)
-        }
-        this.sprite.spriteFrame = spf
-        this.sprite.spriteFrame.rect = rect(0, 0, this.onceWidth, this.onceHeight)
+    /**
+     * 重设spf
+     * @param spf 
+     */
+    resetSpf(spf: SpriteFrame) {
+        spf.offset = v2()
+        console.log("offset=>", spf.offset)
+        this.trim = false;
+        this.spriteFrame = spf
+        this.spriteFrame.rect = rect(0, 0, this.onceWidth, this.onceHeight)
+        let uiTrans = this.node.getComponent(UITransform);
+        uiTrans.setContentSize(this.baseInfo.width, this.baseInfo.height);
     }
 
-    private reset(info: FrameInfo) {
-        // this.frame = info.total_frame;
+    private resetInfo(info: FrameInfo) {
+        let uiTrans = this.node.getComponent(UITransform);
+        uiTrans.setContentSize(info.width, info.height);
+        console.log("width->", info.width)
+        console.log("height->", info.height)
+
         this.frameCount = info.width / info.once_width;
         this.onceWidth = info.once_width;
         this.onceHeight = info.once_height;
         this.perTime = Number(game.frameRate) / this.frame * (1 / Number(game.frameRate));
-
+        this.perTime *= 40
         this.startTime = 0;
         this.frameIndex = 0;
+
+        this.baseInfo = info;
     }
 
     update(dt: number) {
-        if (!this.frameSprite) {
+        if (!this.spriteFrame) {
             return
         }
         if (!this.autoPlay) {
@@ -105,24 +104,29 @@ export class FrameComponent extends Component {
         }
         this.startTime = 0;
         this.frameIndex++;
-        if (this.frameIndex > this.frameCount && this.onceAct) {
-            if (this.preFlag) {  //TODO: 上一个事件,多次播放还是单独播放? 需要定义一个结构来保存
-                this.onceAct = false;
-                this.playPreAction()
+
+        if (this.baseInfo.damage_frame.includes(this.frameIndex)) {
+            this.curFrameActExt.onKeyFrameFunc && this.curFrameActExt.onKeyFrameFunc(this.baseInfo);
+        }
+
+        if (this.frameIndex >= this.frameCount) {
+            this.curFrameActExt.onEndFrameFunc && this.curFrameActExt.onEndFrameFunc(this.baseInfo);
+
+            if (this.curFrameActExt.flag_onceAct) {
+                if (this.curFrameActExt.flag_preAct) {
+                    this.playPreAction()
+                    return;
+                }
+                this.playDefaultAction()
                 return;
             }
-
-            //执行一个动作完成, 判断是否由一次动作事件
-            this.onceAct = false;
-            this.playDefaultAction()
-            this.autoPlay = false
-            return;
         }
+
         let index = this.frameIndex % this.frameCount;
 
         let x = index * this.onceWidth
-        this.sprite.spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
-        this.sprite.markForUpdateRenderData(true)
+        this.spriteFrame.rect = rect(x, 0, this.onceWidth, this.onceHeight)
+        this.markForUpdateRenderData(true)
     }
 
     //记录第几帧, 向外发送事件, 外部关心当前动画到第几帧了
@@ -148,79 +152,86 @@ export class FrameComponent extends Component {
     }
 
     /**
-     * 播放一个动作
+     * 
+     * @param actName 
+     * @param ext 
+     * @returns 
      */
-    public playOnceAction(actName: string, once: boolean = false, pre: boolean = false) {
+    private async playAction(actName: string, ext: FrameActExt) {
         console.log("playAct=>", actName)
-        this.autoPlay = true;
-        this.preFlag = pre;
-        let info = ConfigMgr.heroAction[actName]
+
+        let info = ConfigMgr.getHeroAction(actName)
         //加载一个
         if (!info) {
             console.log("无效的info", info)
-            return;
+            return false;
         }
+
         let res_path = info.res_path;
 
-        this.reset(info);
-        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
-            if (err) {
-                console.log(err)
-                return;
-            }
-            this.onceAct = once;
-            this.oldAct = this.newAct;
-            this.newAct = actName;
-            this.initSpriteFrame(spriteFrame);
-        });
+        let spf = await this.getRes(res_path)
+        if (!spf) {
+            console.log("资源未找到:", res_path)
+            return false;
+        }
+
+        this.resetInfo(info);
+        this.resetSpf(spf);
+
+        this.preFrameActExt = this.curFrameActExt;
+        this.curFrameActExt = ext;
+        console.log("preFrameActExt111", this.preFrameActExt)
+        console.log("curFrameActExt", this.curFrameActExt)
+        return true;
     }
 
     /**
-   * 播放一个动作
-   */
-    public playPreAction() {
-        console.log("playPreAction=>", this.oldAct)
-        this.autoPlay = true;
-        let info = ConfigMgr.heroAction[this.oldAct]
-        //加载一个
-        if (!info) {
-            console.log("无效的info", info)
-            return;
+     * 播放一个动作
+     */
+    public async playOnceAction(actName: string | FrameActExt, ext?: FrameActExt) {
+        if (typeof (actName) === "string") {
+            ext = ext || {}
+        } else {
+            ext = actName || {}
         }
-        let res_path = info.res_path;
+        let flag = await this.playAction(ext.actName, ext)
+        if (flag) {
+            this.historyArr.push(ext)
+        }
+    }
 
-        this.reset(info);
-        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
-            if (err) {
-                console.log(err)
-                return;
-            }
-            let temp = this.oldAct;
-            this.oldAct = this.newAct;
-            this.newAct = temp;
-            this.initSpriteFrame(spriteFrame);
-        });
+    /**
+     * 播放上一个动作
+     */
+    public async playPreAction() {
+        console.log("preFrameActExt111", this.preFrameActExt)
+        let flag = await this.playAction(this.preFrameActExt.actName, this.preFrameActExt)
+        if (flag) {
+            this.historyArr.push(this.preFrameActExt)
+        }
     }
 
     /**
      * 播放默认动作
      */
-    public playDefaultAction() {
-        let info = ConfigMgr.heroAction[this.defaultAct]
-        //加载一个
-        if (!info) {
-            console.log("无效的info", info)
-            return;
+    public async playDefaultAction() {
+        let flag = await this.playAction(this.defaultAct, { actName: this.defaultAct })
+        if (flag) {
+            this.historyArr.push({ actName: this.defaultAct })
         }
-        let res_path = info.res_path;
-        this.reset(info);
-        resources.load(res_path, SpriteFrame, null, (err, spriteFrame) => {
-            if (err) {
-                console.log(err)
-                return;
-            }
-            this.initSpriteFrame(spriteFrame);
-        });
     }
+
+    private async getRes(resPath: string) {
+        return new Promise<SpriteFrame>((resolve, reject) => {
+            resources.load(resPath, SpriteFrame, null, (err, spriteFrame) => {
+                resolve(spriteFrame)
+                if (err) {
+                    console.log(err)
+                    return;
+                }
+            });
+        })
+    }
+
 }
 

@@ -1,7 +1,7 @@
 import { Node, _decorator, CCInteger, Component, EventMouse, KeyCode, Sprite, v2, v3, Vec2 } from 'cc';
 import { find } from 'cc';
 import { BoxCollider2D } from 'cc';
-import BaseCtrl from '../base/BaseCtrl';
+import BaseCtrl from '../../base/BaseCtrl';
 
 export default class HeroCtrl extends BaseCtrl {
 

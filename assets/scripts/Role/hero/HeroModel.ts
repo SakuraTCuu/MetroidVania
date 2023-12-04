@@ -22,7 +22,7 @@ interface CombatAttributes {
     currentDefense: number;
     // 其他战斗属性...
 }
-export default class HeroModule {
+export default class HeroModel {
 
     private static defaultAttributes: DefaultAttributes = {
         hp: 100,
@@ -50,11 +50,11 @@ export default class HeroModule {
     };
 
     public getDefaultAttributes(): DefaultAttributes {
-        return { ...HeroModule.defaultAttributes };
+        return { ...HeroModel.defaultAttributes };
     }
 
     public getStaticAttributes(): StaticAttributes {
-        return { ...HeroModule.staticAttributes };
+        return { ...HeroModel.staticAttributes };
     }
 
     public getDynamicAttributes(): DynamicAttributes {

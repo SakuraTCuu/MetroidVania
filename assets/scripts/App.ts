@@ -1,5 +1,5 @@
 import { director } from "cc";
-import HeroCtrl from "./controller/HeroCtrl";
+import HeroCtrl from "./Role/hero/HeroCtrl";
 import InputCtrl from "./controller/InputCtrl";
 import MonsterCtrl from "./controller/MonsterCtrl";
 import SkillCtrl from "./controller/SkillCtrl";
