@@ -65,8 +65,8 @@ export class FrameComponent extends Sprite {
      * @param spf 
      */
     resetSpf(spf: SpriteFrame) {
-        spf.offset = v2()
-        console.log("offset=>", spf.offset)
+        // spf.offset = v2()
+        spf.packable = false;
         this.trim = false;
         this.spriteFrame = spf
         this.spriteFrame.rect = rect(0, 0, this.onceWidth, this.onceHeight)
@@ -77,14 +77,12 @@ export class FrameComponent extends Sprite {
     private resetInfo(info: FrameInfo) {
         let uiTrans = this.node.getComponent(UITransform);
         uiTrans.setContentSize(info.width, info.height);
-        console.log("width->", info.width)
-        console.log("height->", info.height)
 
         this.frameCount = info.width / info.once_width;
         this.onceWidth = info.once_width;
         this.onceHeight = info.once_height;
         this.perTime = Number(game.frameRate) / this.frame * (1 / Number(game.frameRate));
-        this.perTime *= 40
+        // this.perTime *= 40
         this.startTime = 0;
         this.frameIndex = 0;
 
@@ -160,6 +158,12 @@ export class FrameComponent extends Sprite {
     private async playAction(actName: string, ext: FrameActExt) {
         console.log("playAct=>", actName)
 
+        //判断是否是重复
+        //如果重复动作,停止
+        if (this.curFrameActExt.actName === actName) {
+            return;
+        }
+
         let info = ConfigMgr.getHeroAction(actName)
         //加载一个
         if (!info) {
@@ -180,8 +184,6 @@ export class FrameComponent extends Sprite {
 
         this.preFrameActExt = this.curFrameActExt;
         this.curFrameActExt = ext;
-        console.log("preFrameActExt111", this.preFrameActExt)
-        console.log("curFrameActExt", this.curFrameActExt)
         return true;
     }
 
@@ -204,7 +206,6 @@ export class FrameComponent extends Sprite {
      * 播放上一个动作
      */
     public async playPreAction() {
-        console.log("preFrameActExt111", this.preFrameActExt)
         let flag = await this.playAction(this.preFrameActExt.actName, this.preFrameActExt)
         if (flag) {
             this.historyArr.push(this.preFrameActExt)

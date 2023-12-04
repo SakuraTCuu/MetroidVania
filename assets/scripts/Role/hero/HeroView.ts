@@ -30,9 +30,16 @@ export class HeroView extends Component {
     private flipBody: boolean = false;
     private preDirection: number = null;
 
-    private isShiftPressed: boolean = false;
 
     private model: HeroModel = null;
+
+    private isShiftPressed: boolean = false;
+    //蹲下状态
+    private isCrouch: boolean = false;
+    //跳
+    private isJump: boolean = false;
+    //翻滚
+    private isRoll: boolean = false;
 
     onPressKeySpace: KeyEvent = {
         down: () => {
@@ -86,22 +93,20 @@ export class HeroView extends Component {
             this.playHeroAction("run", false)
         },
         up: () => {
-            console.log("onPressKeyD up")
             this.clickFlag = false;
             this.moveDirection = v2(0, 0)
             this.playHeroAction("idle", false)
         }
     };
 
-    onPressKeyCX: KeyEvent = {
-        down: (event) => {
-            console.log("onPressKeyCX")
-        }
-    };
-
     onMouseLeft: KeyEvent = {
         down: () => {
-            this.playHeroAction("attack")
+            let actName = "attack"
+            //判断是否是蹲下状态
+            if (this.isCrouch) {
+                actName = "crouchAttack"
+            }
+            this.playHeroAction(actName)
         },
         up: () => {
 
@@ -110,7 +115,12 @@ export class HeroView extends Component {
 
     onMouseRight: KeyEvent = {
         down: () => {
-            this.playHeroAction("attackCombo")
+            let actName = "attackCombo"
+            //判断是否是蹲下状态
+            if (this.isCrouch) {
+                actName = "crouchAttack"
+            }
+            this.playHeroAction(actName)
         },
         up: () => {
 
@@ -130,11 +140,13 @@ export class HeroView extends Component {
         down: () => {
             console.log("onPress_Shift_S")
             this.clickFlag = true;
+            this.isCrouch = true
             this.playHeroAction("crouch", false)
         },
         up: () => {
             this.clickFlag = false;
             this.isShiftPressed = false;
+            this.isCrouch = false
             this.playHeroAction("idle", false)
         }
     }
@@ -142,6 +154,7 @@ export class HeroView extends Component {
     onPress_Shift_A: KeyEvent = {
         down: () => {
             this.clickFlag = true;
+            this.isCrouch = true;
             this.moveDirection = v2(-1, 0)
             if (this.preDirection === KeyCode.KEY_D) {
                 this.flipBody = true;
@@ -151,6 +164,7 @@ export class HeroView extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.isCrouch = false;
             this.moveDirection = v2(0, 0)
             this.playHeroAction("idle", false)
         }
@@ -159,6 +173,7 @@ export class HeroView extends Component {
     onPress_Shift_D: KeyEvent = {
         down: () => {
             this.clickFlag = true;
+            this.isCrouch = true;
             this.moveDirection = v2(1, 0)
             if (this.preDirection === KeyCode.KEY_A) {
                 this.flipBody = true;
@@ -168,11 +183,11 @@ export class HeroView extends Component {
         },
         up: () => {
             this.clickFlag = false;
+            this.isCrouch = false;
             this.moveDirection = v2(0, 0)
             this.playHeroAction("idle", false)
         }
     }
-
 
     start() {
         this.model = new HeroModel()
